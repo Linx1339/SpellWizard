@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <title>Spell Heroes</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="dictionary.js"></script>
+    <script src="script.js"></script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div id="viewportContainer" class="vpcontainer">
+        <!-- Language Selector -->
+        <div id="languageSelector">
+            <span id="languageFlag">🇬🇧</span>
+            <select id="languageSelect">
+                <option value="EN">EN</option>
+                <option value="SE">SE</option>
+            </select>
+        </div>
+        <!-- Main Menu -->
+        <div id="mainMenu" class="menu">
+            <h1>Spell Heroes</h1>
+            <button onclick="continueGame()">Continue</button>
+            <button onclick="startGame1st()">New Game</button>
+            <button onclick="showOptions()">Options</button>
+            <button onclick="exitGame()">Exit</button>
+        </div>
+
+        <!-- Game Screen (hidden initially) -->
+        <div id="gameScreen" class="game-screen" style="display: none;">
+
+            <!-- Level Display -->
+            <div id="levelDisplay" class="level-display"></div>
+            
+            <!-- Top Section (Player and NPC HP) -->
+            <div id="topSection">
+                <div class="character-column left">
+                    <div id="playerHP" class="hp-display"></div>
+                    <img id="playerImage" src="assets/player.png" alt="Player">
+                </div>
+                <div class="character-column right">
+                    <div id="npcHP" class="hp-display"></div>
+                    <img id="npcImage" src="assets/npc.png" alt="NPC">
+                </div>
+            </div>
+
+            <!-- Gameboard Section -->
+            <div id="gameBoard" class="game-board"></div>
+
+            <!-- Action Buttons -->
+            <div id="bottomSection" >
+                <!-- Word Display Section -->
+                <div id="wordDisplay"></div>
+
+                <!-- Action Buttons Section -->
+                <div id="actionButtons">
+                    <button onclick="clearSelection()" id="clearSelectionButton">Clear</button>
+                    <button onclick="castSpell()" id="castSpellButton">Cast Spell</button>
+                    <button onclick="openMenu()" id="openMenuButton">Menu</button>
+                </div>
+
+                <!-- Recent Words Display -->
+                <button id="recentWordsButton" onclick="showRecentWordsScreen()">Recent Words</button>
+            </div>
+        </div>
+
+        <!-- Recent Words Screen (hidden initially) -->
+        <div id="recentWordsScreen" style="display: none;">
+            <h2>Recent Words</h2>
+            <div id="recentWordsContainer" class="scrollable-container"></div>
+            <button id="backButton">Back to Game</button>
+        </div>
+
+        <!-- Options Screen (hidden initially) -->
+        <div id="optionsScreen" class="menu" style="display: none;">
+            <h1>Options</h1>
+            <div>
+                <label for="enemyBehavior">Enemy Behavior:</label>
+                <select id="enemyBehavior">
+                    <option value="computer">Computer</option>
+                    <option value="player-like">Player-like</option>
+                </select>
+            </div>
+            <div>
+                <label for="difficultyLevel">Difficulty Level:</label>
+                <select id="difficultyLevel">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div>
+                <label for="theme">Theme:</label>
+                <select id="theme">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <button onclick="saveOptions()">Save</button>
+            <button onclick="exitToMainMenu()">Back</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" style="display: none;">
+            <h1>Game Over</h1>
+            <p>You reached level <span id="finalLevel"></span>!</p>
+            <button onclick="retryGame()">Retry</button>
+            <button onclick="exitToMainMenu()">Exit to Main Menu</button>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victoryScreen" style="display: none;">
+            <h1>Victory!</h1>
+            <button onclick="nextLevel()">Next Level</button>
+            <button onclick="exitToMainMenu()">Exit to Main Menu</button>
+        </div>
+    </div>
+</body>
+</html>
