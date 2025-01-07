@@ -282,6 +282,7 @@ async function waitForDictionaryLoad(language, firstLetter) {
 }
 // Handle Letter Click (Player selecting letters for word)
 async function handleLetterClick(row, col) {
+    resetGreyedOutLetters(); // Makes sure greyed out letters don't stay greyed out when clicking on a new valid letter
     const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
     const theme = document.body.className.split('-')[0];
 
