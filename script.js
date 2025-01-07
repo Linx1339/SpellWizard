@@ -280,38 +280,54 @@ async function waitForDictionaryLoad(language, firstLetter) {
     }
     return false;
 }
-// Handle Letter Click (Player selecting letters for word)
+
 async function handleLetterClick(row, col) {
-    resetGreyedOutLetters(); // Makes sure greyed out letters don't stay greyed out when clicking on a new valid letter
     const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
-    const theme = document.body.className.split('-')[0];
-
-    if (cell.classList.contains('greyed-out')) {
-        return;
-    }
-
-    if (usedLetters.some(l => l.row === row && l.col === col)) {
-        return;
-    }
-
     const letter = gameBoard[row][col];
-    currentWord += letter;
-    usedLetters.push({ row, col, letter });
-    selectedCells.push({ row, col });
+    const language = localStorage.getItem('selectedLanguage') || 'EN';
 
-    document.getElementById('wordDisplay').textContent = currentWord;
-    cell.classList.add('selected');
-
-    // Wait for dictionary to load if this is the first letter
-    if (currentWord.length === 1) {
-        const language = localStorage.getItem('selectedLanguage') || 'EN';
+    // Handle first letter click
+    if (currentWord.length === 0) {
+        // Load dictionary/ordbok for first letter
         const loaded = await waitForDictionaryLoad(language, letter.toUpperCase());
         if (!loaded) {
             console.error('Failed to load dictionary/ordbok data');
             return;
         }
+        currentWord += letter;
+        usedLetters.push({ row, col, letter });
+        selectedCells.push({ row, col });
+        cell.classList.add('selected');
+        document.getElementById('wordDisplay').textContent = currentWord;
+        greyOutInvalidLetters();
+        return;
     }
-    
+
+    // For subsequent letters, check if letter is in validNextLetters
+    const dictionary = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(key => 
+        key.startsWith(language === 'SE' ? 'ordbok' : 'dictionary'))));
+
+    if (!dictionary) {
+        console.error('No dictionary loaded');
+        return;
+    }
+
+    const validWords = dictionary.filter(word => word.startsWith(currentWord));
+    const letterCount = countLettersOnBoard(gameBoard);
+    const filteredValidWords = validWords.filter(word => canFormWord(word, letterCount));
+    const validNextLetters = new Set(filteredValidWords.map(word => word[currentWord.length]));
+
+    // Only allow click if letter is valid
+    if (!validNextLetters.has(letter)) {
+        console.log(`Invalid letter: ${letter}`);
+        return;
+    }
+
+    currentWord += letter;
+    usedLetters.push({ row, col, letter });
+    selectedCells.push({ row, col });
+    cell.classList.add('selected');
+    document.getElementById('wordDisplay').textContent = currentWord;
     greyOutInvalidLetters();
 }
 
@@ -395,15 +411,25 @@ function greyOutInvalidLetters() {
             const letter = gameBoard[row][col];
             const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
             
+            
+            if (!usedLetters.some(l => l.row === row && l.col === col) && !validNextLetters.has(letter)) {
+                cell.classList.add('greyed-out');
+                console.log('greyed-out added to cell classlist')
+            } else if (!usedLetters.some(l => l.row === row && l.col === col)) {
+                cell.classList.remove('greyed-out');
+            }
+
             // Skip already used letters
-            if (usedLetters.some(l => l.row === row && l.col === col)) {
+            /*if (usedLetters.some(l => l.row === row && l.col === col)) {
                 continue;
             }
 
-            // Grey out if letter is not valid next letter
             if (!validNextLetters.has(letter)) {
                 cell.classList.add('greyed-out');
-            }
+                console.log(`Greyed out letter: ${letter} at (${row}, ${col})`); // Debug log
+            } else {
+                cell.classList.remove('greyed-out'); // Ensure only valid letters are active
+            }*/
         }
     }
 }
