@@ -72,7 +72,7 @@ const translations = {
         clear: "Clear",
         castSpell: "Cast Spell",
         menu: "Menu",
-        title: "Spell Heroes"
+        title: "Spell Wizard"
         
     },
     SE: {
@@ -83,7 +83,7 @@ const translations = {
         clear: "Rensa",
         castSpell: "Spela Ord",
         menu: "Meny",
-        title: "Stavhjältar"
+        title: "Spell Wizard"
     }
 };
 function updateTextContent(language) {
