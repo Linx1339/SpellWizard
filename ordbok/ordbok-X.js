@@ -1,0 +1,31 @@
+window.ordboks = window.ordboks || {};
+window.ordboks['X'] = [
+  "XENOFOBANDE",
+  "XENOFOBEN",
+  "XENOFOBENS",
+  "XENOFOBIS",
+  "XENOFOBS",
+  "XENOGAMIANDE",
+  "XENOGAMIEN",
+  "XENOGAMIENS",
+  "XENOGAMIS",
+  "XENONANDE",
+  "XENONET",
+  "XENONETS",
+  "XENONS",
+  "XINJIANGS",
+  "XYLOFONANDE",
+  "XYLOFONEN",
+  "XYLOFONENS",
+  "XYLOFONISTANDE",
+  "XYLOFONISTEN",
+  "XYLOFONISTENS",
+  "XYLOFONISTS",
+  "XYLOFONS",
+  "XYLOGRAFANDE",
+  "XYLOGRAFEN",
+  "XYLOGRAFENS",
+  "XYLOGRAFIS",
+  "XYLOGRAFS"
+];
+localStorage.setItem('ordbokX', JSON.stringify(ordbokX));
