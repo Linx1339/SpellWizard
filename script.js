@@ -248,40 +248,69 @@ function renderGameBoard() {
             cell.dataset.col = col;
             cell.onclick = () => {
                 const letter = cell.textContent.trim();
+                const language = localStorage.getItem('selectedLanguage') || 'EN';
                 if (currentWord.length === 0 && letter) {
-                    loadOrdbok(letter);
+                    if (language === 'SE') {
+                        loadOrdbok(letter); // Load ordbok if language is set to SE
+                    } else {
+                        loadDictionary(); // Load dictionary if language is set to EN
+                    }
                 }
-                loadDictionary();
                 handleLetterClick(row, col);
             };
             boardElement.appendChild(cell);
         }
     }
 }
-
+async function waitForDictionaryLoad(language, firstLetter) {
+    const maxAttempts = 10;
+    const delayMs = 100;
+    
+    for(let i = 0; i < maxAttempts; i++) {
+        if (language === 'SE') {
+            if (localStorage.getItem(`ordbok${firstLetter}`)) {
+                return true;
+            }
+        } else {
+            if (localStorage.getItem('dictionary')) {
+                return true;
+            }
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    return false;
+}
 // Handle Letter Click (Player selecting letters for word)
-function handleLetterClick(row, col) {
+async function handleLetterClick(row, col) {
     const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
     const theme = document.body.className.split('-')[0];
 
-    // Check if the letter is greyed out
     if (cell.classList.contains('greyed-out')) {
-        return; // Prevent selecting a greyed-out letter
+        return;
     }
 
     if (usedLetters.some(l => l.row === row && l.col === col)) {
-        return; // Prevent selecting a letter that's already used in this turn
+        return;
     }
 
     const letter = gameBoard[row][col];
-    currentWord += letter; // Add the letter to the current word
-    usedLetters.push({ row, col, letter }); // Mark this letter as used for this turn
-    selectedCells.push({ row, col }); // Track the cell clicked
+    currentWord += letter;
+    usedLetters.push({ row, col, letter });
+    selectedCells.push({ row, col });
 
-    document.getElementById('wordDisplay').textContent = currentWord; // Display current word
-
-    // Change the background color to darker yellow when selected
+    document.getElementById('wordDisplay').textContent = currentWord;
     cell.classList.add('selected');
+
+    // Wait for dictionary to load if this is the first letter
+    if (currentWord.length === 1) {
+        const language = localStorage.getItem('selectedLanguage') || 'EN';
+        const loaded = await waitForDictionaryLoad(language, letter.toUpperCase());
+        if (!loaded) {
+            console.error('Failed to load dictionary/ordbok data');
+            return;
+        }
+    }
+    
     greyOutInvalidLetters();
 }
 
@@ -319,36 +348,60 @@ function canFormWord(word, letterCount) {
 //Grey out invalid letters that don't contribute to forming valid words
 function greyOutInvalidLetters() {
     const language = localStorage.getItem('selectedLanguage') || 'EN';
-    const dictionary = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(key => key.startsWith(language === 'SE' ? 'ordbok' : 'dictionary'))));
+    
+    // Get dictionary based on first letter if it's the first click
+    let dictionary;
+    if (currentWord.length === 1) {
+        const firstLetter = currentWord[0].toUpperCase();
+        if (language === 'SE') {
+            dictionary = JSON.parse(localStorage.getItem(`ordbok${firstLetter}`));
+        } else {
+            dictionary = JSON.parse(localStorage.getItem('dictionary'));
+        }
+    } else {
+        dictionary = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(key => 
+            key.startsWith(language === 'SE' ? 'ordbok' : 'dictionary'))));
+    }
+
+    console.log('Current dictionary:', dictionary); // Debug log
+    
     if (!dictionary || dictionary.length === 0) {
         console.log('Dictionary is empty');
         return;
     }
+
+    // Filter valid words and get valid next letters
     const validWords = dictionary.filter(word => word.startsWith(currentWord));
+    console.log('Valid words for current:', validWords); // Debug log
+
     if (validWords.length === 0) {
         console.log('No valid words start with the current word:', currentWord);
         return;
     }
-    const letterCount = countLettersOnBoard(gameBoard); // Use gameBoard here
+
+    const letterCount = countLettersOnBoard(gameBoard);
     const filteredValidWords = validWords.filter(word => canFormWord(word, letterCount));
-    console.log('Filtered Valid Words:', filteredValidWords); // Debug log
     const validNextLetters = new Set(filteredValidWords.map(word => word[currentWord.length]));
-    console.log('Valid Next Letters:', validNextLetters); // Debug log
-    //const validNextLetters = new Set(validWords.map(word => word[currentWord.length]));
+
+    console.log('Letter count:', letterCount); // Debug log
+    console.log('Filtered valid words:', filteredValidWords); // Debug log
+    console.log('Valid next letters:', validNextLetters); // Debug log
+
+    // Grey out invalid letters
     const theme = document.body.className.split('-')[0];
-
-    console.log('Current Word:', currentWord);
-    console.log('Valid Words:', validWords);
-    console.log('Valid Next Letters:', validNextLetters);
-
     for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 7; col++) {
             const letter = gameBoard[row][col];
             const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
-            if (!usedLetters.some(l => l.row === row && l.col === col) && !validNextLetters.has(letter)) {
+            
+            // Skip already used letters
+            if (usedLetters.some(l => l.row === row && l.col === col)) {
+                continue;
+            }
+
+            // Grey out if letter is not valid next letter
+            if (!validNextLetters.has(letter)) {
                 cell.classList.add('greyed-out');
-            } else if (!usedLetters.some(l => l.row === row && l.col === col)) {
-                cell.classList.remove('greyed-out');
             }
         }
     }
@@ -993,7 +1046,7 @@ async function fetchWordDetails(word) {
     let apiUrl;
 
     if (language === 'SE') {
-        apiUrl = `https://api.ord.se/ord/${word}`;
+        // apiUrl = `https://api.ord.se/ord/${word}`;
     } else {
         apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
     }
@@ -1147,57 +1200,4 @@ function removeOrdbok() {
 
 function removeDictionary() {
     localStorage.removeItem('dictionary');
-}
-
-// Function to check if a letter is valid
-function isValidLetter(letter) {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('OrdbokDB', 1);
-
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            const transaction = db.transaction(['ordbok'], 'readonly');
-            const objectStore = transaction.objectStore('ordbok');
-            const index = objectStore.index('word');
-            const query = index.getAll(IDBKeyRange.bound(letter, letter + '\uffff'));
-
-            query.onsuccess = function() {
-                resolve(query.result.length > 0);
-            };
-
-            query.onerror = function() {
-                reject(query.error);
-            };
-        };
-
-        request.onerror = function(event) {
-            reject(event.target.errorCode);
-        };
-    });
-}
-// Function to check if a next letter is valid
-function isValidNextLetter(currentWord, nextLetter) {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('OrdbokDB', 1);
-
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            const transaction = db.transaction(['ordbok'], 'readonly');
-            const objectStore = transaction.objectStore('ordbok');
-            const index = objectStore.index('word');
-            const query = index.getAll(IDBKeyRange.bound(currentWord + nextLetter, currentWord + nextLetter + '\uffff'));
-
-            query.onsuccess = function() {
-                resolve(query.result.length > 0);
-            };
-
-            query.onerror = function() {
-                reject(query.error);
-            };
-        };
-
-        request.onerror = function(event) {
-            reject(event.target.errorCode);
-        };
-    });
 }
