@@ -8,6 +8,7 @@ let playerplaylevel = 1;
 let recentgameover = false;
 let isFirstCellClicked = false;
 let ordbokData = null; // Declare ordbokData globally
+let enemyTurnInProgress = false;
 
 const resizeOps = () => {
     document.documentElement.style.setProperty("--vh", window.innerHeight * 0.01 + "px");
@@ -282,6 +283,11 @@ async function waitForDictionaryLoad(language, firstLetter) {
 }
 
 async function handleLetterClick(row, col) {
+    // Check if cell is already selected
+    if (selectedCells.some(cell => cell.row === row && cell.col === col)) {
+        return; // Exit if cell was already used
+    }
+
     const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
     const letter = gameBoard[row][col];
     const language = localStorage.getItem('selectedLanguage') || 'EN';
@@ -598,204 +604,236 @@ function playerTurn() {
             currentWord = ''; // Reset the word
             document.getElementById('wordDisplay').textContent = ''; // Clear the word display
             usedLetters = []; // Reset used letters
-           enemyTurn();
         }, 1000); // Delay of 1 second before the animation
-    }
+    }   enemyTurn();
 }
 
 // Function to handle the enemy's turn
-function enemyTurn() {
-    // Determine enemy behavior based on selected option
-    const enemyBehavior = JSON.parse(localStorage.getItem('gameOptions')).enemyBehavior;
-    // Determine difficulty level based on selected option
-    const difficultyLevel = JSON.parse(localStorage.getItem('gameOptions')).difficultyLevel;
-        let minWordLength, maxWordLength;
-        let dmgmodifier;
+async function enemyTurn() {
+    if (enemyTurnInProgress) return;
+    enemyTurnInProgress = true;
+    
+    try {
 
-        switch (difficultyLevel) {
-            case 'easy':
-            dmgmodifier = 8;
-            break;
-            case 'medium':
-            dmgmodifier = 4;
-            break;
-            case 'hard':
-            dmgmodifier = 2;
-            break;
-            default:
-            dmgmodifier = 8;
-        }
+        // Determine enemy behavior based on selected option
+        const enemyBehavior = JSON.parse(localStorage.getItem('gameOptions')).enemyBehavior;
+        // Determine difficulty level based on selected option
+        const difficultyLevel = JSON.parse(localStorage.getItem('gameOptions')).difficultyLevel;
+            let minWordLength, maxWordLength;
+            let dmgmodifier;
 
-    if (!playerTurn || npcHP <= 0 || playerplaylevel != currentLevel) return; // Prevent enemy turn if NPC is dead
-    //if (playerTurn = true) return;
-    if (enemyBehavior === 'computer') {
-        if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
-        const delay = Math.floor(Math.random() * 1000) + 1000; // Random delay between 1-2 seconds
-        setTimeout(() => {
+            switch (difficultyLevel) {
+                case 'easy':
+                dmgmodifier = 8;
+                break;
+                case 'medium':
+                dmgmodifier = 4;
+                break;
+                case 'hard':
+                dmgmodifier = 2;
+                break;
+                default:
+                dmgmodifier = 8;
+            }
+
+        if (!playerTurn || npcHP <= 0 || playerplaylevel != currentLevel) return; // Prevent enemy turn if NPC is dead
+        //if (playerTurn = true) return;
+        if (enemyBehavior === 'computer') {
             if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
-
-            const action = Math.floor(Math.random() * 3); // Randomly choose action: 0 = row, 1 = column, 2 = both
-            let damage = 0;
-            let rowToDestroy = -1, colToDestroy = -1;
-
-            
-            if (action === 0 || action === 2) {
-                // Destroy a random row
-                rowToDestroy = Math.floor(Math.random() * 7);
-                for (let col = 0; col < 7; col++) {
-                    const cell = document.querySelector(`div[data-row="${rowToDestroy}"][data-col="${col}"]`);
-                    // Change bg color of cell for enemynpc
-                    const theme = document.body.className.split('-')[0];
-                    cell.classList.add(`${theme}-mode`, 'enemyselected');
-                }
-            }
-
-            if (action === 1 || action === 2) {
-                // Destroy a random column
-                colToDestroy = Math.floor(Math.random() * 7);
-                for (let row = 0; row < 7; row++) {
-                    const cell = document.querySelector(`div[data-row="${row}"][data-col="${colToDestroy}"]`);
-                    // Change bg color of cell for enemynpc
-                    const theme = document.body.className.split('-')[0];
-                    cell.classList.add(`${theme}-mode`, 'enemyselected'); // Pastel red color
-                }
-            }
-
+            const delay = Math.floor(Math.random() * 1000) + 1000; // Random delay between 1-2 seconds
             setTimeout(() => {
                 if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
 
-                if (rowToDestroy !== -1) {
-                    // Destroy the previously selected row
+                const action = Math.floor(Math.random() * 3); // Randomly choose action: 0 = row, 1 = column, 2 = both
+                let damage = 0;
+                let rowToDestroy = -1, colToDestroy = -1;
+
+                
+                if (action === 0 || action === 2) {
+                    // Destroy a random row
+                    rowToDestroy = Math.floor(Math.random() * 7);
                     for (let col = 0; col < 7; col++) {
-                        damage += getLetterDamage(gameBoard[rowToDestroy][col]);
-                        gameBoard[rowToDestroy][col] = ''; // Clear the cell
+                        const cell = document.querySelector(`div[data-row="${rowToDestroy}"][data-col="${col}"]`);
+                        // Change bg color of cell for enemynpc
+                        const theme = document.body.className.split('-')[0];
+                        cell.classList.add(`${theme}-mode`, 'enemyselected');
                     }
                 }
 
-                if (colToDestroy !== -1) {
-                    // Destroy the previously selected column
+                if (action === 1 || action === 2) {
+                    // Destroy a random column
+                    colToDestroy = Math.floor(Math.random() * 7);
                     for (let row = 0; row < 7; row++) {
-                        damage += getLetterDamage(gameBoard[row][colToDestroy]);
-                        gameBoard[row][colToDestroy] = ''; // Clear the cell
+                        const cell = document.querySelector(`div[data-row="${row}"][data-col="${colToDestroy}"]`);
+                        // Change bg color of cell for enemynpc
+                        const theme = document.body.className.split('-')[0];
+                        cell.classList.add(`${theme}-mode`, 'enemyselected'); // Pastel red color
                     }
                 }
-                playerHP -= Math.floor(damage / dmgmodifier); // Deal damage based on difficulty level, x/8 for easy, x/4 for medium, x/2 for hard
-                updateHP(); // Update the player's HP display
-                renderGameBoard(); // Re-render the game board to show destroyed cells
 
-                // Fill empty cells after the enemy's turn with a slight delay
                 setTimeout(() => {
-                    fillEmptyCells();
+                    if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
 
-                    // Player gets another turn
-                    currentWord = ''; // Reset the word
-                    document.getElementById('wordDisplay').textContent = ''; // Clear the word display
-                    usedLetters = []; // Reset used letters
-                }, 500); // Delay before filling empty cells
-            }, 1000); // Delay before destroying cells and dealing damage
-            // Call player turn after the post-turn animation
-            playerTurn();
-        }, delay);
-    } 
-    if (enemyBehavior === 'player-like') {
-        if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
-        const difficultyLevel = JSON.parse(localStorage.getItem('gameOptions')).difficultyLevel;
-        let minWordLength, maxWordLength;
+                    if (rowToDestroy !== -1) {
+                        // Destroy the previously selected row
+                        for (let col = 0; col < 7; col++) {
+                            damage += getLetterDamage(gameBoard[rowToDestroy][col]);
+                            gameBoard[rowToDestroy][col] = ''; // Clear the cell
+                        }
+                    }
 
-        switch (difficultyLevel) {
-            case 'easy':
-            minWordLength = 2;
-            maxWordLength = 5;
-            break;
-            case 'medium':
-            minWordLength = 3;
-            maxWordLength = 7;
-            break;
-            case 'hard':
-            minWordLength = 5;
-            maxWordLength = 10; // Assuming 10 is the max word length for hard
-            break;
-            default:
-            minWordLength = 2;
-            maxWordLength = 5;
-        }
+                    if (colToDestroy !== -1) {
+                        // Destroy the previously selected column
+                        for (let row = 0; row < 7; row++) {
+                            damage += getLetterDamage(gameBoard[row][colToDestroy]);
+                            gameBoard[row][colToDestroy] = ''; // Clear the cell
+                        }
+                    }
+                    playerHP -= Math.floor(damage / dmgmodifier); // Deal damage based on difficulty level, x/8 for easy, x/4 for medium, x/2 for hard
+                    updateHP(); // Update the player's HP display
+                    renderGameBoard(); // Re-render the game board to show destroyed cells
 
-        const randomWordLength = Math.floor(Math.random() * (maxWordLength - minWordLength + 1)) + minWordLength;
-
-        const language = localStorage.getItem('selectedLanguage') || 'EN';
-        const dictionary = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(key => key.startsWith(language === 'SE' ? 'ordbok' : 'dictionary'))));
-        const validWords = dictionary.filter(word => word.length === randomWordLength);
-        const possibleWords = validWords.filter(word => {
-            let tempBoard = gameBoard.map(row => row.slice());
-            for (let letter of word) {
-            let found = false;
-            for (let row = 0; row < 7; row++) {
-                for (let col = 0; col < 7; col++) {
-                if (tempBoard[row][col] === letter) {
-                    tempBoard[row][col] = ''; // Mark this letter as used
-                    found = true;
-                    break;
-                }
-                }
-                if (found) break;
-            }
-            if (!found) return false;
-            }
-            return true;
-        });
-
-        if (possibleWords.length === 0) {
-            console.error('No valid words found on the current board');
-            return;
-        }
-
-        const selectedWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
-        const selectedLetters = [];
-
-        for (let letter of selectedWord) {
-            let found = false;
-            while (!found) {
-                const row = Math.floor(Math.random() * 7);
-                const col = Math.floor(Math.random() * 7);
-                if (gameBoard[row][col] === letter) {
-                    selectedLetters.push({ row, col, letter });
-                    gameBoard[row][col] = ''; // Mark this letter as used
-                    found = true;
-                }
-            }
-        }
-
-        selectedLetters.forEach(({ row, col }, index) => {
-            setTimeout(() => {
-                const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
-                // Change bg color of cell for enemynpc
-                const theme = document.body.className.split('-')[0];
-                cell.classList.add(`${theme}-mode`, 'enemyselected');
-
-                if (index === selectedLetters.length - 1) {
-                    document.getElementById('wordDisplay').textContent = selectedWord; // Display the enemy's word
-                    const damage = calculateDamage(selectedWord);
-                    addWord(selectedWord);
-                    playerHP -= damage;
-                    updateHP();
-
+                    // Fill empty cells after the enemy's turn with a slight delay
                     setTimeout(() => {
-                        selectedLetters.forEach(({ row, col }) => {
-                            gameBoard[row][col] = ''; // Clear the letter from the game board
-                        });
-                        renderGameBoard(); // Re-render the game board to show cleared letters
-                        fillEmptyCells(); // Fill empty cells after the enemy's turn
+                        fillEmptyCells();
+
                         // Player gets another turn
                         currentWord = ''; // Reset the word
                         document.getElementById('wordDisplay').textContent = ''; // Clear the word display
                         usedLetters = []; // Reset used letters
-                        removeOrdbok();
-                        localStorage.removeItem('dictionary'); // remove the dictionary after the enemy's turn
-                        playerTurn();
-                    }, 2000); // Delay before clearing letters and giving control back to the player
+                    }, 500); // Delay before filling empty cells
+                }, 1000); // Delay before destroying cells and dealing damage
+                // Call player turn after the post-turn animation
+                playerTurn();
+            }, delay);
+        } 
+        if (enemyBehavior === 'player-like') {
+            if (!playerTurn || npcHP <= 0) return; // Prevent enemy turn if NPC is dead
+            const difficultyLevel = JSON.parse(localStorage.getItem('gameOptions')).difficultyLevel;
+            let minWordLength, maxWordLength;
+
+            switch (difficultyLevel) {
+                case 'easy':
+                minWordLength = 2;
+                maxWordLength = 5;
+                break;
+                case 'medium':
+                minWordLength = 3;
+                maxWordLength = 7;
+                break;
+                case 'hard':
+                minWordLength = 5;
+                maxWordLength = 10; // Assuming 10 is the max word length for hard
+                break;
+                default:
+                minWordLength = 2;
+                maxWordLength = 5;
+            }
+
+            // Remove current ordbok
+            removeOrdbok();
+
+            // Get all available letters from board
+            const availableLetters = new Set();
+            for (let row = 0; row < 7; row++) {
+                for (let col = 0; col < 7; col++) {
+                    if (gameBoard[row][col]) {
+                        availableLetters.add(gameBoard[row][col].toUpperCase());
+                    }
                 }
-            }, index * 350); // Delay of 500ms between each letter
-        });
+            }
+
+            // Convert to array and select random letter
+            const lettersArray = Array.from(availableLetters);
+            const startLetter = lettersArray[Math.floor(Math.random() * lettersArray.length)];
+
+            // Load ordbok for selected letter
+            loadOrdbok(startLetter);
+            await new Promise(resolve => setTimeout(resolve, 150)); // Wait for 0.15 seconds
+
+            // Generate random word length and pick a valid from the dictionary
+            const randomWordLength = Math.floor(Math.random() * (maxWordLength - minWordLength + 1)) + minWordLength;
+
+            const language = localStorage.getItem('selectedLanguage') || 'EN';
+            const dictionary = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(key => key.startsWith(language === 'SE' ? 'ordbok' : 'dictionary'))));
+            const validWords = dictionary.filter(word => word.length === randomWordLength);
+            const possibleWords = validWords.filter(word => {
+                let tempBoard = gameBoard.map(row => row.slice());
+                for (let letter of word) {
+                let found = false;
+                for (let row = 0; row < 7; row++) {
+                    for (let col = 0; col < 7; col++) {
+                    if (tempBoard[row][col] === letter) {
+                        tempBoard[row][col] = ''; // Mark this letter as used
+                        found = true;
+                        break;
+                    }
+                    }
+                    if (found) break;
+                }
+                if (!found) return false;
+                }
+                return true;
+            });
+
+            if (possibleWords.length === 0) {
+                console.error('No valid words found on the current board');
+                return;
+            }
+
+            const selectedWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
+            const selectedLetters = [];
+
+            for (let letter of selectedWord) {
+                let found = false;
+                while (!found) {
+                    const row = Math.floor(Math.random() * 7);
+                    const col = Math.floor(Math.random() * 7);
+                    if (gameBoard[row][col] === letter) {
+                        selectedLetters.push({ row, col, letter });
+                        gameBoard[row][col] = ''; // Mark this letter as used
+                        found = true;
+                    }
+                }
+            }
+
+            selectedLetters.forEach(({ row, col }, index) => {
+                setTimeout(() => {
+                    const cell = document.querySelector(`div[data-row="${row}"][data-col="${col}"]`);
+                    // Change bg color of cell for enemynpc
+                    const theme = document.body.className.split('-')[0];
+                    //cell.classList.add(`${theme}-mode`, 'enemyselected');
+                    cell.classList.add(`${theme}-mode`, 'enemyselected');
+                    document.getElementById('wordDisplay').textContent += cell.textContent;
+
+                    if (index === selectedLetters.length - 1) {
+                        document.getElementById('wordDisplay').textContent = selectedWord; // Display the enemy's word
+                        const damage = calculateDamage(selectedWord);
+                        addWord(selectedWord);
+                        playerHP -= damage;
+                        updateHP();
+
+                        setTimeout(() => {
+                            selectedLetters.forEach(({ row, col }) => {
+                                gameBoard[row][col] = ''; // Clear the letter from the game board
+                            });
+                            renderGameBoard(); // Re-render the game board to show cleared letters
+                            fillEmptyCells(); // Fill empty cells after the enemy's turn
+                            // Player gets another turn
+                            currentWord = ''; // Reset the word
+                            document.getElementById('wordDisplay').textContent = ''; // Clear the word display
+                            usedLetters = []; // Reset used letters
+                            removeOrdbok();
+                            localStorage.removeItem('dictionary'); // remove the dictionary after the enemy's turn
+                            playerTurn();
+                        }, 2000); // Delay before clearing letters and giving control back to the player
+                    }
+                }, index * 350); // Delay of 500ms between each letter
+            });
+        }
+        await playerTurn(); // Ensure playerTurn completes before allowing new enemy turns
+    } finally {
+        enemyTurnInProgress = false;
     }
 }
 
