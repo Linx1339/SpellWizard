@@ -749,7 +749,7 @@ async function enemyTurn() {
 
             // Load ordbok for selected letter
             loadOrdbok(startLetter);
-            await new Promise(resolve => setTimeout(resolve, 150)); // Wait for 0.15 seconds
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 0.5 seconds
 
             // Generate random word length and pick a valid from the dictionary
             const randomWordLength = Math.floor(Math.random() * (maxWordLength - minWordLength + 1)) + minWordLength;
