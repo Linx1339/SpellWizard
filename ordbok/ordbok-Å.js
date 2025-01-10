@@ -1959,7 +1959,7 @@ window.ordboks['Å'] = [
   "ÅSKAT",
   "ÅSKBLÅ",
   "ÅSKBLÅA",
-  "ÅSKBLTT",
+  "ÅSKBLÅTT",
   "ÅSKBY",
   "ÅSKBYAR",
   "ÅSKBYARNA",

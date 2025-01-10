@@ -356,7 +356,7 @@ window.ordboks['Ä'] = [
   "ÄGGVITE",
   "ÄGGVITEFRI",
   "ÄGGVITEFRIA",
-  "ÄGGVITEFRTT",
+  "ÄGGVITEFRITT",
   "ÄGGVITEÄMNE",
   "ÄGGVITEÄMNEN",
   "ÄGGVITEÄMNENA",

@@ -1726,7 +1726,7 @@ window.ordboks['E'] = [
   "EKOBROTTSMYNDIGHETENS",
   "EKOFRI",
   "EKOFRIA",
-  "EKOFRTT",
+  "EKOFRITT",
   "EKOLLON",
   "EKOLLONEN",
   "EKOLLONENS",
